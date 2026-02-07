@@ -18,8 +18,21 @@
 const fs = require("fs");
 const path = require("path");
 
-function findBindingGypPath() {
+function findNodePtyBindingGypPath() {
   return path.join(__dirname, "..", "node_modules", "node-pty", "binding.gyp");
+}
+
+function findWinptyGypPath() {
+  return path.join(
+    __dirname,
+    "..",
+    "node_modules",
+    "node-pty",
+    "deps",
+    "winpty",
+    "src",
+    "winpty.gyp",
+  );
 }
 
 function removeSpectreBlock(source) {
@@ -60,35 +73,54 @@ function main() {
     return;
   }
 
-  const bindingGypPath = findBindingGypPath();
-  if (!fs.existsSync(bindingGypPath)) {
-    console.warn("⚠️  未找到 node-pty/binding.gyp，跳过:", bindingGypPath);
+  const repoRoot = path.join(__dirname, "..");
+  const targets = [
+    { name: "node-pty/binding.gyp", path: findNodePtyBindingGypPath() },
+    { name: "node-pty/deps/winpty/src/winpty.gyp", path: findWinptyGypPath() },
+  ];
+
+  let foundAny = false;
+  let patchedAny = false;
+
+  for (const target of targets) {
+    if (!fs.existsSync(target.path)) {
+      console.warn("⚠️  未找到文件，跳过:", target.name);
+      continue;
+    }
+
+    const source = fs.readFileSync(target.path, "utf-8");
+    const hasSpectre = source.includes("SpectreMitigation") && source.includes("'Spectre'");
+    if (hasSpectre) foundAny = true;
+
+    if (isCheck) {
+      console.log(`📄 检查文件: ${path.relative(repoRoot, target.path)}`);
+      console.log(hasSpectre ? "🔧 发现 SpectreMitigation 配置（将被移除）" : "✅ 未发现 SpectreMitigation 配置");
+      continue;
+    }
+
+    if (!hasSpectre) continue;
+
+    const { changed, code } = removeSpectreBlock(source);
+    if (!changed) {
+      console.warn(`⚠️  检测到 SpectreMitigation，但未匹配到可移除的配置块: ${target.name}`);
+      process.exit(1);
+    }
+
+    fs.writeFileSync(target.path, code);
+    patchedAny = true;
+    console.log("✅ 已移除 Windows SpectreMitigation 配置:", target.name);
+  }
+
+  if (isCheck) return;
+
+  if (!foundAny) {
+    console.log("ℹ️  未发现 SpectreMitigation 配置，无需修改");
     return;
   }
 
-  const source = fs.readFileSync(bindingGypPath, "utf-8");
-  const hasSpectre = source.includes("SpectreMitigation") && source.includes("'Spectre'");
-
-  if (isCheck) {
-    console.log(`📄 检查文件: ${path.relative(path.join(__dirname, ".."), bindingGypPath)}`);
-    console.log(hasSpectre ? "🔧 发现 SpectreMitigation 配置（将被移除）" : "✅ 未发现 SpectreMitigation 配置");
-    return;
+  if (!patchedAny) {
+    console.log("ℹ️  SpectreMitigation 已被移除，无需修改");
   }
-
-  if (!hasSpectre) {
-    console.log("ℹ️  node-pty 已无 SpectreMitigation 配置，无需修改");
-    return;
-  }
-
-  const { changed, code } = removeSpectreBlock(source);
-  if (!changed) {
-    console.warn("⚠️  检测到 SpectreMitigation，但未匹配到可移除的配置块（node-pty 结构可能变化）");
-    process.exit(1);
-  }
-
-  fs.writeFileSync(bindingGypPath, code);
-  console.log("✅ 已移除 node-pty Windows SpectreMitigation 配置:", bindingGypPath);
 }
 
 main();
-
