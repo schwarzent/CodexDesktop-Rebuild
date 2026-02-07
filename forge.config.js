@@ -52,6 +52,15 @@ module.exports = {
       // 根目录本身必须放行
       if (filePath === "") return false;
 
+      // electron-packager 传入的路径在不同环境下可能是：
+      // - "/package.json"（POSIX 风格）
+      // - "package.json" 或 "src\\webview\\..."（Windows 风格）
+      // 这里统一为以 "/" 开头的 POSIX 风格，避免误过滤导致打包产物缺少 package.json。
+      const normalizedPath = filePath.replace(/\\/g, "/");
+      const normalized = normalizedPath.startsWith("/")
+        ? normalizedPath
+        : `/${normalizedPath}`;
+
       // 白名单前缀：运行时需要的顶层路径（对标官方 asar 结构）
       // ignore 函数会收到目录和文件两种路径，需要同时匹配完整路径和中间目录
       const allowedPrefixes = [
@@ -62,12 +71,12 @@ module.exports = {
       ];
 
       // 精确匹配 package.json
-      if (filePath === "/package.json") return false;
+      if (normalized === "/package.json") return false;
 
       // 检查：filePath 是否是某个白名单路径的前缀（即父目录），
       // 或者 filePath 是否在某个白名单路径之下（即子文件/子目录）
       for (const prefix of allowedPrefixes) {
-        if (prefix.startsWith(filePath) || filePath.startsWith(prefix)) {
+        if (prefix.startsWith(normalized) || normalized.startsWith(prefix)) {
           return false;
         }
       }
