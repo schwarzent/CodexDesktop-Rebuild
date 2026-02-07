@@ -17,7 +17,7 @@
     "build:mac-x64": "npm run patch && electron-forge make --platform=darwin --arch=x64",
     "build:win": "npm run build:win-x64",
     "build:win-x64": "npm run patch && electron-forge make --platform=win32 --arch=x64",
-    "build:win-oneclick": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-win-oneclick.ps1",
+    "build:win-oneclick": "scripts\\\\build-win-oneclick.cmd",
     "build:linux": "npm run patch && npm run build:linux-x64 && npm run build:linux-arm64",
     "build:linux-x64": "npm run patch && electron-forge make --platform=linux --arch=x64",
     "build:linux-arm64": "npm run patch && electron-forge make --platform=linux --arch=arm64",
