@@ -54,6 +54,25 @@ function Assert-CleanWorkingTree([string]$RepoRoot) {
   }
 }
 
+function Ensure-Dependencies([string]$RepoRoot) {
+  $nodeModulesDir = Join-Path $RepoRoot "node_modules"
+  if (Test-Path $nodeModulesDir) { return }
+
+  Push-Location $RepoRoot
+  try {
+    Write-Info "📦 未检测到 node_modules，开始安装依赖..."
+    $lockFile = Join-Path $RepoRoot "package-lock.json"
+    if (Test-Path $lockFile) {
+      npm ci
+    } else {
+      npm install
+    }
+    Write-Info "✅ 依赖安装完成"
+  } finally {
+    Pop-Location
+  }
+}
+
 function Stop-OutCodexProcesses([string]$RepoRoot) {
   $pattern = "*\out\Codex-win32-x64\Codex.exe"
   $processes = Get-Process Codex -ErrorAction SilentlyContinue |
@@ -151,6 +170,7 @@ Assert-Command "git"
 Assert-Command "npm"
 
 Assert-CleanWorkingTree $repoRoot
+Ensure-Dependencies $repoRoot
 Stop-OutCodexProcesses $repoRoot
 Remove-OutAppDir $repoRoot
 
