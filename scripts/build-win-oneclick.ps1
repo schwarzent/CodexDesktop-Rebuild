@@ -1,4 +1,4 @@
-<#
+﻿<#
   一键编译 Windows 安装包（Squirrel）+ ZIP 便携包。
 
   设计目标（面向新手）：
@@ -180,4 +180,5 @@ try {
 
 Stash-BuildPatchesIfNeeded $repoRoot
 Print-Artifacts $repoRoot
+
 
