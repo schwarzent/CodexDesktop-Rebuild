@@ -1,4 +1,4 @@
-# Codex Desktop Rebuild(fix slash commands for Windows)
+# Codex Desktop Rebuild
 
 Cross-platform Electron build for OpenAI Codex Desktop App.
 
