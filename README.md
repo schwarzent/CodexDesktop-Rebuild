@@ -36,6 +36,21 @@ npm run build:all
 npm run dev
 ```
 
+## Performance / Stability
+
+This repo includes a post-build patch script (`scripts/patch-performance.js`) that:
+- Adds lightweight startup timing marks (JSONL) when `CODEX_PERF_LOG=1`
+- Defers non-critical startup work to improve first window availability (enabled by default for packaged builds)
+- Adds additional diagnostics marks for renderer crashes/unresponsiveness (only when perf log is enabled)
+
+Environment variables:
+- `CODEX_PERF_LOG=1`: enable perf JSONL logs
+- `CODEX_PERF_LOG_DIR=<dir>`: override log directory (default: `<userData>/perf` when available)
+- `CODEX_PERF_LOG_FILE_NAME=<name>`: override log file name (default: `perf-<pid>.jsonl`)
+- `CODEX_PERF_LOG_STDERR=1`: also print JSONL to stderr
+- `CODEX_DEFER_INIT=0|1`: override startup deferral (`0` disables, `1` enables). If unset, packaged builds defer init by default.
+- `CODEX_DISABLE_DEVTOOLS_INSTALL=1`: skip devtools extension install (mainly for dev builds)
+
 ## Project Structure
 
 ```

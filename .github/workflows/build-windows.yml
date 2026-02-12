@@ -1,0 +1,42 @@
+name: Build (Windows)
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-win-x64:
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Windows installer (x64)
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: npm run build:win-x64
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Codex-win32-x64-${{ github.sha }}
+          path: out/make/**
+          if-no-files-found: error
+
